@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dewas FC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="Dewas FC home">
+        <img src="dewas-fc-logo-transparent.png" alt="" class="brand-mark">
+        <span>Dewas FC</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#roster">Roster</a>
+        <a href="#matchday">Matchday</a>
+        <a href="#wall">Wall</a>
+      </nav>
+    </header>
+
+    <main id="home">
+      <section class="hero">
+        <canvas id="pitch-canvas" aria-hidden="true"></canvas>
+        <div class="hero-copy">
+          <p class="eyebrow">Friendship Football Club</p>
+          <h1>Dewas FC</h1>
+          <p class="lede">
+            Built for the boys, the banter, and the matches that somehow become legendary.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#roster">Meet The Squad</a>
+            <button class="button secondary" id="chant-button" type="button">Start Chant</button>
+          </div>
+        </div>
+        <aside class="score-card" aria-label="Dewas FC quick stats">
+          <img src="dewas-fc-logo-transparent.png" alt="Dewas FC crest" class="score-crest">
+          <dl>
+            <div>
+              <dt>Club</dt>
+              <dd>Dewas FC</dd>
+            </div>
+            <div>
+              <dt>Vibe</dt>
+              <dd>For Fun</dd>
+            </div>
+            <div>
+              <dt>Squad</dt>
+              <dd>4 Players</dd>
+            </div>
+          </dl>
+        </aside>
+      </section>
+
+      <section class="section roster-section" id="roster">
+        <div class="section-heading">
+          <p class="eyebrow">Official Roster</p>
+          <h2>The Starting Four</h2>
+        </div>
+        <div class="roster-grid">
+          <article class="player-card">
+            <span class="number">07</span>
+            <h3>Rhythm Paudel</h3>
+            <p>Midfield engine with big-match energy.</p>
+          </article>
+          <article class="player-card captain">
+            <span class="number">10</span>
+            <h3>Dewas Poudyel</h3>
+            <p>Captain mode, clutch moments, loud celebrations.</p>
+          </article>
+          <article class="player-card">
+            <span class="number">11</span>
+            <h3>Crishal Tamang</h3>
+            <p>Fast breaks, clean touches, instant highlight potential.</p>
+          </article>
+          <article class="player-card">
+            <span class="number">23</span>
+            <h3>Karan Bhujel</h3>
+            <p>Pressure defender and chaos creator in the best way.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="matchday" id="matchday">
+        <div>
+          <p class="eyebrow">Matchday Mood</p>
+          <h2>Show Up. Play Hard. Laugh Later.</h2>
+          <p>
+            The unofficial Dewas FC rulebook is simple: bring energy, back your teammates,
+            and never let a missed shot survive without a joke.
+          </p>
+        </div>
+        <div class="match-panel">
+          <span class="fixture-label">Next Fixture</span>
+          <strong>Dewas FC vs Whoever Pulls Up</strong>
+          <span>Kickoff: whenever everyone finally arrives</span>
+        </div>
+      </section>
+
+      <section class="section" id="wall">
+        <div class="section-heading">
+          <p class="eyebrow">Club Wall</p>
+          <h2>For The Group Chat</h2>
+        </div>
+        <div class="wall">
+          <p id="chant-line">Click "Start Chant" and the site will hype the team.</p>
+          <button class="button primary" id="wall-button" type="button">New Chant</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Dewas FC</span>
+      <span>Made for friends, matches, and memories.</span>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+
+const canvas = document.querySelector("#pitch-canvas");
+const ctx = canvas.getContext("2d");
+const chantLine = document.querySelector("#chant-line");
+const chantButtons = [document.querySelector("#chant-button"), document.querySelector("#wall-button")];
+
+let width = 0;
+let height = 0;
+let pointer = { x: 0.62, y: 0.42 };
+
+const chants = [
+  "Dewas FC on top. No debate.",
+  "Rhythm, Dewas, Crishal, Karan. That is the squad.",
+  "Four players, full confidence.",
+  "Dewas FC: built different for absolutely no reason.",
+  "Win or lose, the group chat survives.",
+];
+
+const balls = Array.from({ length: 16 }, (_, index) => ({
+  x: Math.random(),
+  y: Math.random(),
+  size: 2 + Math.random() * 4,
+  phase: index * 0.8,
+  speed: 0.00035 + Math.random() * 0.00055,
+}));
+
+const runners = [
+  { x: 0.18, y: 0.55, scale: 0.92, phase: 0.2 },
+  { x: 0.34, y: 0.5, scale: 1.15, phase: 1.1 },
+  { x: 0.48, y: 0.53, scale: 0.9, phase: 2.4 },
+  { x: 0.64, y: 0.48, scale: 0.95, phase: 0.8 },
+  { x: 0.78, y: 0.52, scale: 0.82, phase: 1.8 },
+];
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  width = rect.width;
+  height = rect.height;
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function drawRunner(x, y, scale, time, phase) {
+  const stride = Math.sin(time * 0.006 + phase) * 5 * scale;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.strokeStyle = "rgba(235, 242, 255, 0.9)";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.fillStyle = "#1a2d68";
+  ctx.beginPath();
+  ctx.arc(0, -27, 5, 0, Math.PI * 2);
+  ctx.fillStyle = "#e9d4ba";
+  ctx.fill();
+  ctx.fillStyle = "#232f73";
+  ctx.fillRect(-6, -20, 12, 24);
+  ctx.beginPath();
+  ctx.moveTo(-5, -12);
+  ctx.lineTo(-18, -5 + stride);
+  ctx.moveTo(5, -11);
+  ctx.lineTo(18, -18 - stride);
+  ctx.moveTo(-4, 3);
+  ctx.lineTo(-16, 25 - stride);
+  ctx.moveTo(5, 3);
+  ctx.lineTo(17, 25 + stride);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPitch(time) {
+  ctx.clearRect(0, 0, width, height);
+
+  const sky = ctx.createLinearGradient(0, 0, 0, height);
+  sky.addColorStop(0, "#08101e");
+  sky.addColorStop(0.3, "#0b1729");
+  sky.addColorStop(1, "#0b2440");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "#070d15";
+  ctx.beginPath();
+  ctx.moveTo(0, height * 0.23);
+  ctx.bezierCurveTo(width * 0.25, height * 0.16, width * 0.35, height * 0.25, width * 0.52, height * 0.17);
+  ctx.bezierCurveTo(width * 0.66, height * 0.11, width * 0.76, height * 0.24, width, height * 0.17);
+  ctx.lineTo(width, height * 0.45);
+  ctx.lineTo(0, height * 0.45);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(246, 166, 67, 0.82)";
+  ctx.beginPath();
+  ctx.arc(width * 0.86, height * 0.14, 7, 0, Math.PI * 2);
+  ctx.fill();
+  const lampGlow = ctx.createRadialGradient(width * 0.86, height * 0.14, 4, width * 0.86, height * 0.14, width * 0.18);
+  lampGlow.addColorStop(0, "rgba(246, 166, 67, 0.32)");
+  lampGlow.addColorStop(1, "rgba(246, 166, 67, 0)");
+  ctx.fillStyle = lampGlow;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "rgba(8, 10, 16, 0.5)";
+  ctx.fillRect(width * 0.78, 0, width * 0.22, height * 0.36);
+
+  ctx.save();
+  ctx.translate(0, height * 0.31);
+  const stripeWidth = Math.max(56, width / 13);
+  for (let x = -stripeWidth; x < width + stripeWidth; x += stripeWidth) {
+    ctx.fillStyle = Math.round(x / stripeWidth) % 2 === 0 ? "#0a6c55" : "#075744";
+    ctx.fillRect(x, 0, stripeWidth, height * 0.69);
+  }
+
+  const turfSpacing = 14;
+  ctx.lineWidth = 1.2;
+  for (let y = 0; y < height * 0.69; y += turfSpacing) {
+    ctx.strokeStyle = y % (turfSpacing * 2) === 0 ? "rgba(117, 201, 246, 0.08)" : "rgba(234, 247, 255, 0.05)";
+    ctx.beginPath();
+    ctx.moveTo(0, y + Math.sin(time * 0.001 + y) * 1.5);
+    ctx.lineTo(width, y + Math.cos(time * 0.001 + y) * 1.5);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(width * 0.5, height * 0.74);
+  ctx.rotate(-0.06);
+  ctx.fillStyle = "#7b5bbb";
+  ctx.fillRect(-width * 0.58, -height * 0.1, width * 1.16, height * 0.23);
+  ctx.fillStyle = "rgba(234, 247, 255, 0.8)";
+  ctx.fillRect(-width * 0.62, -height * 0.16, width * 1.24, height * 0.055);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(width * 0.62, height * 0.52);
+  ctx.rotate(-0.1);
+  ctx.strokeStyle = "rgba(234, 247, 255, 0.8)";
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.moveTo(-width * 0.76, height * 0.09);
+  ctx.lineTo(width * 0.58, -height * 0.03);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(248, 220, 64, 0.78)";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(width * 0.1, height * 0.16);
+  ctx.lineTo(width * 0.58, height * 0.11);
+  ctx.stroke();
+  ctx.restore();
+
+  const glow = ctx.createRadialGradient(width * 0.72, height * 0.28, 20, width * 0.72, height * 0.28, width * 0.58);
+  glow.addColorStop(0, "rgba(117, 201, 246, 0.24)");
+  glow.addColorStop(0.5, "rgba(12, 134, 209, 0.1)");
+  glow.addColorStop(1, "rgba(12, 134, 209, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.save();
+  ctx.translate(width * 0.58 + (pointer.x - 0.5) * 28, height * 0.58 + (pointer.y - 0.5) * 20);
+  ctx.rotate(-0.12);
+  ctx.strokeStyle = "rgba(234, 247, 255, 0.5)";
+  ctx.lineWidth = 3;
+  const fieldW = width * 0.62;
+  const fieldH = height * 0.48;
+  ctx.strokeRect(-fieldW / 2, -fieldH / 2, fieldW, fieldH);
+  ctx.beginPath();
+  ctx.arc(0, 0, Math.min(width, height) * 0.14, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, -fieldH / 2);
+  ctx.lineTo(0, fieldH / 2);
+  ctx.stroke();
+
+  const boxW = fieldW * 0.18;
+  const boxH = fieldH * 0.46;
+  ctx.strokeStyle = "rgba(117, 201, 246, 0.52)";
+  ctx.strokeRect(-fieldW / 2, -boxH / 2, boxW, boxH);
+  ctx.strokeRect(fieldW / 2 - boxW, -boxH / 2, boxW, boxH);
+  ctx.strokeStyle = "rgba(234, 247, 255, 0.34)";
+  ctx.strokeRect(-fieldW / 2, -boxH * 0.78 / 2, boxW * 0.45, boxH * 0.78);
+  ctx.strokeRect(fieldW / 2 - boxW * 0.45, -boxH * 0.78 / 2, boxW * 0.45, boxH * 0.78);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(width * 0.38, height * 0.31);
+  ctx.strokeStyle = "#f8df35";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(-width * 0.08, -height * 0.31);
+  ctx.lineTo(-width * 0.08, height * 0.03);
+  ctx.lineTo(width * 0.08, height * 0.03);
+  ctx.lineTo(width * 0.08, -height * 0.31);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, height * 0.03);
+  ctx.lineTo(0, height * 0.16);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(248, 251, 255, 0.82)";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(-width * 0.105, height * 0.1, width * 0.21, height * 0.11);
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 8; i += 1) {
+    const netX = -width * 0.105 + (width * 0.21 * i) / 8;
+    ctx.beginPath();
+    ctx.moveTo(netX, height * 0.1);
+    ctx.lineTo(netX, height * 0.21);
+    ctx.stroke();
+  }
+  for (let i = 1; i < 4; i += 1) {
+    const netY = height * 0.1 + (height * 0.11 * i) / 4;
+    ctx.beginPath();
+    ctx.moveTo(-width * 0.105, netY);
+    ctx.lineTo(width * 0.105, netY);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  for (const runner of runners) {
+    drawRunner(width * runner.x, height * runner.y, runner.scale, time, runner.phase);
+  }
+
+  for (const ball of balls) {
+    const x = ball.x * width + Math.sin(time * ball.speed + ball.phase) * 24;
+    const y = height * 0.35 + ball.y * height * 0.58 + Math.cos(time * ball.speed + ball.phase) * 18;
+    const nearPointer = Math.max(0, 1 - Math.hypot(x - pointer.x * width, y - pointer.y * height) / 220);
+    ctx.globalAlpha = 0.26 + nearPointer * 0.56;
+    ctx.fillStyle = ball.phase % 2 > 1 ? "#75c9f6" : "#f8fbff";
+    ctx.beginPath();
+    ctx.arc(x, y, ball.size + nearPointer * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function render(time = 0) {
+  drawPitch(time);
+  requestAnimationFrame(render);
+}
+
+function movePointer(event) {
+  const rect = canvas.getBoundingClientRect();
+  pointer = {
+    x: Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+    y: Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height)),
+  };
+}
+
+function newChant() {
+  const current = chantLine.textContent;
+  let next = current;
+  while (next === current) {
+    next = chants[Math.floor(Math.random() * chants.length)];
+  }
+  chantLine.textContent = next;
+}
+
+window.addEventListener("resize", resize);
+canvas.addEventListener("pointermove", movePointer);
+chantButtons.forEach((button) => button.addEventListener("click", newChant));
+
+resize();
+requestAnimationFrame(render);
+
+:root {
+  color-scheme: dark;
+  --bg: #061426;
+  --ink: #f8fbff;
+  --muted: #b9d2e9;
+  --line: rgba(248, 251, 255, 0.2);
+  --panel: rgba(5, 28, 55, 0.84);
+  --navy: #062a57;
+  --blue: #0c86d1;
+  --sky: #75c9f6;
+  --ice: #eaf7ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px min(5vw, 56px);
+  border-bottom: 1px solid var(--line);
+  background: rgba(6, 20, 38, 0.9);
+  backdrop-filter: blur(16px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  font-family: "Lexend Deca", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.brand::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -6px;
+  width: calc(100% - 62px);
+  height: 2px;
+  border-radius: 999px;
+  background: var(--sky);
+}
+
+.brand-mark {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 28px);
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+nav a {
+  text-decoration: none;
+}
+
+nav a:hover {
+  color: var(--ink);
+}
+
+main,
+footer {
+  width: min(1160px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  align-items: end;
+  min-height: 430px;
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(6, 20, 38, 0.96), rgba(6, 20, 38, 0.55) 48%, rgba(6, 20, 38, 0.28)),
+    linear-gradient(0deg, rgba(6, 20, 38, 0.88), rgba(12, 134, 209, 0.16) 62%, rgba(6, 20, 38, 0.18)),
+    url("dewas-field.png") center / cover no-repeat;
+}
+
+#pitch-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 74% 18%, rgba(117, 201, 246, 0.24), transparent 34%),
+    linear-gradient(90deg, rgba(6, 20, 38, 0.38), rgba(6, 20, 38, 0.12) 58%, rgba(6, 20, 38, 0.34));
+  pointer-events: none;
+}
+
+.hero-copy,
+.score-card {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-copy {
+  max-width: 720px;
+  padding: clamp(26px, 5vw, 46px);
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--sky);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p,
+dd,
+dt {
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  margin: 0;
+  max-width: 700px;
+  font-size: clamp(3.4rem, 9vw, 6.4rem);
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+h3 {
+  margin: 16px 0 8px;
+  font-size: 1.25rem;
+}
+
+.lede {
+  width: min(560px, 100%);
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.55;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  max-width: 100%;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 950;
+  text-decoration: none;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.button.primary {
+  border-color: var(--ice);
+  background: var(--ice);
+  color: #062a57;
+}
+
+.button.secondary {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.score-card {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+  border-left: 1px solid var(--line);
+  background: rgba(3, 17, 34, 0.54);
+}
+
+.score-crest {
+  width: min(150px, 78%);
+  height: auto;
+  margin: 0 auto;
+  filter: drop-shadow(0 22px 28px rgba(0, 0, 0, 0.35));
+}
+
+dl {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+}
+
+dl div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+dt {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+dd {
+  margin: 0;
+  font-weight: 950;
+}
+
+.section {
+  padding: 52px 0;
+}
+
+.section-heading {
+  width: min(680px, 100%);
+  margin-bottom: 24px;
+}
+
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.player-card {
+  position: relative;
+  min-height: 280px;
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 74% 18%, rgba(117, 201, 246, 0.22), transparent 28%),
+    linear-gradient(160deg, rgba(12, 134, 209, 0.28), rgba(5, 28, 55, 0.92));
+}
+
+.player-card::after {
+  content: "";
+  position: absolute;
+  right: -42px;
+  bottom: -52px;
+  width: 150px;
+  height: 150px;
+  border: 20px solid rgba(248, 247, 237, 0.08);
+  border-radius: 50%;
+}
+
+.player-card.captain {
+  border-color: rgba(117, 201, 246, 0.62);
+  background:
+    radial-gradient(circle at 74% 18%, rgba(234, 247, 255, 0.32), transparent 28%),
+    linear-gradient(160deg, rgba(117, 201, 246, 0.28), rgba(5, 28, 55, 0.94));
+}
+
+.number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #062a57;
+  font-weight: 950;
+}
+
+.player-card p,
+.matchday p,
+.wall p,
+footer {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.matchday {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: stretch;
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(12, 134, 209, 0.3), rgba(234, 247, 255, 0.08)),
+    #071c35;
+}
+
+.matchday p {
+  max-width: 650px;
+  margin-bottom: 0;
+}
+
+.match-panel {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(3, 17, 34, 0.62);
+}
+
+.fixture-label {
+  color: var(--sky);
+  font-size: 0.8rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.match-panel strong {
+  font-size: 1.55rem;
+  line-height: 1.1;
+}
+
+.match-panel span:last-child {
+  color: var(--muted);
+}
+
+.wall {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 140px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #071c35;
+}
+
+.wall p {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+  font-weight: 900;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 34px 0 46px;
+  border-top: 1px solid var(--line);
+}
+
+footer span:first-child {
+  color: var(--ink);
+  font-weight: 950;
+}
+
+@media (max-width: 920px) {
+  .hero,
+  .matchday {
+    grid-template-columns: 1fr;
+  }
+
+  .score-card {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .score-crest {
+    margin: 0;
+  }
+
+  .roster-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  main,
+  footer {
+    width: min(100% - 20px, 1160px);
+  }
+
+  .hero {
+    min-height: 360px;
+  }
+
+  .hero-copy,
+  .score-card,
+  .matchday,
+  .wall {
+    padding: 18px;
+  }
+
+  h1 {
+    font-size: clamp(3rem, 18vw, 4.8rem);
+  }
+
+  .roster-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wall,
+  footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 380" role="img" aria-labelledby="title desc">
+  <title id="title">Dewas FC crest</title>
+  <desc id="desc">A red, gold, and green football club shield for Dewas FC.</desc>
+  <defs>
+    <linearGradient id="shield" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#e94235"/>
+      <stop offset="0.52" stop-color="#2b7d43"/>
+      <stop offset="1" stop-color="#111411"/>
+    </linearGradient>
+  </defs>
+  <path fill="#f4c34c" d="M160 8 295 58v132c0 83-51 143-135 181C76 333 25 273 25 190V58L160 8Z"/>
+  <path fill="url(#shield)" d="M160 31 273 73v113c0 69-41 119-113 153C88 305 47 255 47 186V73l113-42Z"/>
+  <path fill="none" stroke="#f8f7ed" stroke-width="8" d="M160 54 250 88v96c0 57-32 96-90 126-58-30-90-69-90-126V88l90-34Z"/>
+  <circle cx="160" cy="174" r="54" fill="#f8f7ed"/>
+  <path fill="#111411" d="m160 129 19 14-7 22h-24l-7-22 19-14Zm-39 45 20 15-8 23h-24l-7-23 19-15Zm78 0 19 15-7 23h-24l-8-23 20-15Zm-39 43 19 14-7 22h-24l-7-22 19-14Z"/>
+  <path fill="#f4c34c" d="M88 83h144v44H88z"/>
+  <text x="160" y="114" fill="#111411" font-family="Arial, sans-serif" font-size="34" font-weight="900" text-anchor="middle">DEWAS</text>
+  <text x="160" y="309" fill="#f8f7ed" font-family="Arial, sans-serif" font-size="44" font-weight="900" text-anchor="middle">FC</text>
+</svg>
